@@ -1,4 +1,4 @@
-package hcl
+package luv
 
 import (
 	"github.com/chrisfenner/bytecolor/pkg/cylinder"
@@ -16,6 +16,8 @@ func New() (*cylinder.Palette, error) {
 		hueShift,
 		chroma,
 		lightness,
-		colorful.Hcl,
+		func(h, c, l float64) colorful.Color {
+			return colorful.LuvLCh(l, c, h)
+		},
 	)
 }

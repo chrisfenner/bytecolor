@@ -32,17 +32,22 @@ func mainWithError() error {
 	var err error
 	switch strings.ToLower(*palette) {
 	case "hsl":
-		pal, err = hsl.New(30, 1.0, 0.98)
+		pal, err = hsl.New()
 		if err != nil {
 			return err
 		}
 	case "hsv":
-		pal, err = hsv.New(30, 1.0, 0.98)
+		pal, err = hsv.New()
 		if err != nil {
 			return err
 		}
 	case "hcl":
-		pal, err = hcl.New(30, 1.0, 0.95)
+		pal, err = hcl.New()
+		if err != nil {
+			return err
+		}
+	case "luv":
+		pal, err = hcl.New()
 		if err != nil {
 			return err
 		}

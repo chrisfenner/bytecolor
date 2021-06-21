@@ -3,10 +3,12 @@ package tester
 import (
 	"encoding/hex"
 	"fmt"
+	"image/color"
 	"sort"
 
+	"github.com/lucasb-eyer/go-colorful"
 	terminal "github.com/wayneashleyberry/terminal-dimensions"
-	"github.com/wayneashleyberry/truecolor/pkg/color"
+	tc "github.com/wayneashleyberry/truecolor/pkg/color"
 )
 
 var (
@@ -73,13 +75,16 @@ func grayCode(row, column uint) byte {
 }
 
 func Test(p Palette) error {
-	if err := grayCodeFill(p); err != nil {
-		return err
-	}
 	if err := numericOrder(p); err != nil {
 		return err
 	}
-	if err := channelOrder(p); err != nil {
+	if err := grayCodeFill(p); err != nil {
+		return err
+	}
+	if err := hueOrder(p); err != nil {
+		return err
+	}
+	if err := lightnessOrder(p); err != nil {
 		return err
 	}
 	return nil
@@ -120,42 +125,62 @@ func grayCodeFill(p Palette) error {
 			}
 			bg := p.Select(code)
 			fg := invert(bg)
-			color.Color(fg[0], fg[1], fg[2]).Background(bg[0], bg[1], bg[2]).Print(msg)
+			tc.Color(fg[0], fg[1], fg[2]).Background(bg[0], bg[1], bg[2]).Print(msg)
 		}
-	}
-	return nil
-}
-
-func numericOrder(p Palette) error {
-	for i := 0; i < 256; i++ {
-		bg := p.Select(byte(i))
-		color.Background(bg[0], bg[1], bg[2]).Print(" ")
 	}
 	fmt.Printf("\n")
 	return nil
 }
 
-func channelOrder(p Palette) error {
-	colors := make([][3]byte, 256)
+func numericOrder(p Palette) error {
+	fmt.Printf("\n")
+	for i := 0; i < 256; i++ {
+		bg := p.Select(byte(i))
+		tc.Background(bg[0], bg[1], bg[2]).Print(" ")
+	}
+	fmt.Printf("\n")
+	return nil
+}
+
+func hueOrder(p Palette) error {
+	fmt.Printf("\n")
+	colors := make([]colorful.Color, 256)
 	for i := range colors {
-		colors[i] = p.Select(byte(i))
+		rgb := p.Select(byte(i))
+		colors[i], _ = colorful.MakeColor(color.RGBA{rgb[0], rgb[1], rgb[2], 255})
 	}
-	for channel := 0; channel < 3; channel++ {
-		sort.Slice(colors, func(i, j int) bool {
-			ic := colors[i]
-			jc := colors[j]
-			if ic[channel] != jc[channel] {
-				return ic[channel] < jc[channel]
-			}
-			if ic[(channel+1)%3] != jc[(channel+1)%3] {
-				return ic[(channel+1)%3] < jc[(channel+1)%3]
-			}
-			return ic[(channel+2)%3] < jc[(channel+2)%3]
-		})
-		for _, c := range colors {
-			color.Background(c[0], c[1], c[2]).Print(" ")
+	sort.Slice(colors, func(i, j int) bool {
+		hi, _, _ := colors[i].Hcl()
+		hj, _, _ := colors[j].Hcl()
+		return hi < hj
+	})
+	for _, c := range colors {
+		r, g, b, _ := c.RGBA()
+		tc.Background(byte(r), byte(g/256), byte(b/256)).Print(" ")
+	}
+	fmt.Printf("\n")
+	return nil
+}
+
+func lightnessOrder(p Palette) error {
+	fmt.Printf("\n")
+	colors := make([]colorful.Color, 256)
+	for i := range colors {
+		rgb := p.Select(byte(i))
+		colors[i], _ = colorful.MakeColor(color.RGBA{rgb[0], rgb[1], rgb[2], 255})
+	}
+	sort.Slice(colors, func(i, j int) bool {
+		hi, _, li := colors[i].Hcl()
+		hj, _, lj := colors[j].Hcl()
+		if li != lj {
+			return li < lj
 		}
-		fmt.Printf("\n")
+		return hi < hj
+	})
+	for _, c := range colors {
+		r, g, b, _ := c.RGBA()
+		tc.Background(byte(r), byte(g/256), byte(b/256)).Print(" ")
 	}
+	fmt.Printf("\n")
 	return nil
 }
