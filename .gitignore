@@ -9,6 +9,8 @@
 *.test
 
 /tester
+/giftool
+.DS_Store
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
