@@ -22,5 +22,8 @@ func New() (*cylinder.Palette, error) {
 		func(h, c, l float64) colorful.Color {
 			return colorful.LuvLCh(l, c, h)
 		},
+		func(c1, c2 colorful.Color) float64 {
+			return c1.DistanceLuv(c2)
+		},
 	)
 }

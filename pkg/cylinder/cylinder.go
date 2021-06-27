@@ -2,6 +2,8 @@ package cylinder
 
 import (
 	"fmt"
+	"image/color"
+	"math"
 
 	"github.com/chrisfenner/bytecolor/pkg/polar"
 	"github.com/lucasb-eyer/go-colorful"
@@ -9,9 +11,12 @@ import (
 
 type ColorModel = func(angle, radius, height float64) colorful.Color
 
+type DistanceFunc = func(c1, c2 colorful.Color) float64
+
 type Palette struct {
 	bitcolors [8]colorful.Color
 	model     ColorModel
+	dist      DistanceFunc
 }
 
 const (
@@ -22,7 +27,7 @@ const (
 	baseHeight = float64(1.0 / 8)
 )
 
-func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel) (*Palette, error) {
+func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel, dist DistanceFunc) (*Palette, error) {
 	if angleShift > 45.0 || angleShift < 0.0 {
 		return nil, fmt.Errorf("angleShift must be between 0 and 45 degrees")
 	}
@@ -40,6 +45,7 @@ func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel) (*
 	return &Palette{
 		bitcolors: bitcolors,
 		model:     model,
+		dist:      dist,
 	}, nil
 }
 
@@ -60,4 +66,19 @@ func (p *Palette) Select(val byte) [3]byte {
 	result := p.model(mix.Degrees, mix.Radius, mixValue).Clamped()
 	r, g, b, _ := result.RGBA()
 	return [3]byte{byte(r / 256), byte(g / 256), byte(b / 256)}
+}
+
+func (p *Palette) Nearest(c color.Color) byte {
+	best := byte(0)
+	bestDist := math.MaxFloat64
+	for i := 0; i < 256; i++ {
+		rgb := p.Select(byte(i))
+		col, _ := colorful.MakeColor(c)
+		dist := p.dist(col, colorful.Color{float64(rgb[0]) / 255.0, float64(rgb[1]) / 255.0, float64(rgb[2]) / 255.0})
+		if dist < bestDist {
+			bestDist = dist
+			best = byte(i)
+		}
+	}
+	return best
 }

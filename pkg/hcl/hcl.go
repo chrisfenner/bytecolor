@@ -20,5 +20,8 @@ func New() (*cylinder.Palette, error) {
 		chroma,
 		lightness,
 		colorful.Hcl,
+		func(c1, c2 colorful.Color) float64 {
+			return c1.DistanceLab(c2)
+		},
 	)
 }

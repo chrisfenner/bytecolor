@@ -21,6 +21,12 @@ type rgb = [3]byte
 type Palette interface {
 	// Select returns 8bpc R,G,B values for a given byte value
 	Select(b byte) rgb
+	// Nearest returns the byte value corresponding to the approximate color
+	Nearest(c color.Color) byte
+}
+
+func nearestColor(p Palette, c color.Color) rgb {
+	return p.Select(p.Nearest(c))
 }
 
 func invert(c rgb) rgb {
@@ -79,13 +85,16 @@ func Test(p Palette) error {
 	if err := numericOrder(p); err != nil {
 		return err
 	}
-	if err := grayCodeFill(p); err != nil {
-		return err
-	}
 	if err := hueOrder(p); err != nil {
 		return err
 	}
 	if err := lightnessOrder(p); err != nil {
+		return err
+	}
+	if err := grayCodeFill(p); err != nil {
+		return err
+	}
+	if err := hslGamut(p); err != nil {
 		return err
 	}
 	return nil
@@ -127,6 +136,49 @@ func grayCodeFill(p Palette) error {
 			bg := p.Select(code)
 			fg := invert(bg)
 			tc.Color(fg[0], fg[1], fg[2]).Background(bg[0], bg[1], bg[2]).Print(msg)
+		}
+	}
+	fmt.Printf("\n")
+	return nil
+}
+
+func hslGamut(p Palette) error {
+	// Get the current console width and height for tiling.
+	x, err := terminal.Width()
+	if err != nil {
+		return err
+	}
+	y, err := terminal.Height()
+	if err != nil {
+		return err
+	}
+	if x < 16 || y < 16 {
+		return fmt.Errorf("detected terminal size (%d,%d) not big enough for test", x, y)
+	}
+	if y > 16 {
+		y = 16
+	}
+
+	// Grayscale across x
+	fmt.Printf("\n")
+	for j := uint(0); j < x; j++ {
+		l := 1.0 / float64(x) * float64(j)
+		c := colorful.Hsl(0.0, 0.0, l)
+		bg := nearestColor(p, c)
+		tc.Background(bg[0], bg[1], bg[2]).Print(" ")
+	}
+	// Draw an HSL rectangle
+	for i := uint(0); i <= y; i++ {
+		fmt.Printf("\n")
+		for j := uint(0); j < x; j++ {
+			// Every x is a step around the hue circle
+			// Every y is a step in the lightness
+			// Saturation = 1.00
+			h := 360.0 / float64(x) * float64(j)
+			l := 1.0 / float64(y) * float64(i)
+			c := colorful.Hsl(h, 1.0, l)
+			bg := nearestColor(p, c)
+			tc.Background(bg[0], bg[1], bg[2]).Print(" ")
 		}
 	}
 	fmt.Printf("\n")
