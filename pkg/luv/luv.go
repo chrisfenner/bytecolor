@@ -6,9 +6,12 @@ import (
 )
 
 const (
-	hueShift  = float64(30)
-	chroma    = float64(0.05)
-	lightness = float64(1.0 / 8)
+	// Chosen experimentally. Gives an even balance of R/G/B.
+	hueShift = float64(10)
+	// Chosen experimentally. Just as saturated as I can stand.
+	chroma = float64(0.065)
+	// Chosen experimentally. Avoids too many white shades.
+	lightness = float64(0.9 / 8)
 )
 
 func New() (*cylinder.Palette, error) {

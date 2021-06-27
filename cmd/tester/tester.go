@@ -9,6 +9,7 @@ import (
 	"github.com/chrisfenner/bytecolor/pkg/hcl"
 	"github.com/chrisfenner/bytecolor/pkg/hsl"
 	"github.com/chrisfenner/bytecolor/pkg/hsv"
+	"github.com/chrisfenner/bytecolor/pkg/luv"
 	"github.com/chrisfenner/bytecolor/pkg/tester"
 )
 
@@ -47,7 +48,7 @@ func mainWithError() error {
 			return err
 		}
 	case "luv":
-		pal, err = hcl.New()
+		pal, err = luv.New()
 		if err != nil {
 			return err
 		}
