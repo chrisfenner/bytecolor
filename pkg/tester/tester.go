@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"image/color"
+	"math"
 	"sort"
 
 	"github.com/lucasb-eyer/go-colorful"
@@ -150,8 +151,21 @@ func hueOrder(p Palette) error {
 		colors[i], _ = colorful.MakeColor(color.RGBA{rgb[0], rgb[1], rgb[2], 255})
 	}
 	sort.Slice(colors, func(i, j int) bool {
-		hi, _, _ := colors[i].Hcl()
-		hj, _, _ := colors[j].Hcl()
+		hi, ci, li := colors[i].Hcl()
+		hj, cj, lj := colors[j].Hcl()
+		const minC = 0.1
+		// If one color is very un-colorful, put it first.
+		if ci < minC && cj >= minC {
+			return true
+		}
+		if ci >= minC && cj < minC {
+			return false
+		}
+		// If both colors are very un-colorful, order by lightness.
+		if ci < minC && cj < minC {
+			return li < lj
+		}
+		// If neither color is un-colorful, order by hue.
 		return hi < hj
 	})
 	for _, c := range colors {
@@ -170,11 +184,26 @@ func lightnessOrder(p Palette) error {
 		colors[i], _ = colorful.MakeColor(color.RGBA{rgb[0], rgb[1], rgb[2], 255})
 	}
 	sort.Slice(colors, func(i, j int) bool {
-		hi, _, li := colors[i].Hcl()
-		hj, _, lj := colors[j].Hcl()
-		if li != lj {
+		hi, ci, li := colors[i].Hcl()
+		hj, cj, lj := colors[j].Hcl()
+		const minC = 0.1
+		// If one color is very un-colorful, put it first.
+		if ci < minC && cj >= minC {
+			return true
+		}
+		if ci >= minC && cj < minC {
+			return false
+		}
+		// If both colors are very un-colorful, order by lightness (reversed).
+		if ci < minC && cj < minC {
+			return li > lj
+		}
+		const lThresh = 1.0 / 8
+		// If both colors have different lightness, compare them by lightness.
+		if math.Abs(li-lj) > lThresh {
 			return li < lj
 		}
+		// If both colors have very close lightness, order by hue.
 		return hi < hj
 	})
 	for _, c := range colors {
