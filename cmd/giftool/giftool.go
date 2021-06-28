@@ -23,6 +23,7 @@ import (
 var (
 	palette = flag.String("palette", "hsv", "which color palette to use")
 	in      = flag.String("in", "", "the path of the input file(s) (comma-separated)")
+	animate = flag.String("animate", "", "for 2-image merges, whether to animate (vertical or horizontal)")
 )
 
 func main() {
@@ -74,6 +75,7 @@ func mainWithError() error {
 
 	gifs := make([]*image.Paletted, len(infiles))
 	var bounds *image.Rectangle
+	var config *image.Config
 	var sb strings.Builder
 	for i := range infiles {
 		// Read the image
@@ -99,8 +101,10 @@ func mainWithError() error {
 			return err
 		}
 		// Make sure it has the same bounds as all the others
+		// Also, save the config for re-use
 		if bounds == nil {
 			bounds = &g.Image[0].Rect
+			config = &g.Config
 		} else {
 			if g.Image[0].Rect != *bounds {
 				return fmt.Errorf("when passing multiple images, please make sure they are all the same size")
@@ -110,12 +114,41 @@ func mainWithError() error {
 	}
 	sb.WriteString(strings.ToLower(*palette))
 	sb.WriteString(".gif")
+	gifTemplate := gifs[0]
+	const delay = 5 // 20fps
+	result := igif.GIF{
+		Config: *config,
+	}
 
-	// XOR all the images together if there are more than 1
-	for i := 1; i < len(gifs); i++ {
-		for j := 0; j < len(gifs[0].Pix); j++ {
-			gifs[0].Pix[j] ^= gifs[i].Pix[j]
+	if *animate != "" {
+		if len(gifs) != 2 {
+			return fmt.Errorf("'animate' option requires 2 images")
 		}
+		offset := 0
+		numFrames := 0
+		switch *animate {
+		case "vertical":
+			offset = gifTemplate.Stride * 4
+			numFrames = gifTemplate.Rect.Dy() / 4
+		case "horizontal":
+			offset = 4
+			numFrames = gifTemplate.Rect.Dx() / 4
+		default:
+			return fmt.Errorf("unrecognized animation option '%s', only 'vertical' or 'horizontal' are supported", *animate)
+		}
+		for i := 0; i < numFrames; i++ {
+			outData := xorWithOffset(gifs[0].Pix, gifs[1].Pix, offset*i)
+			result.Image = append(result.Image, frame(gifTemplate, outData))
+			result.Delay = append(result.Delay, delay)
+		}
+	} else {
+		inDatas := make([][]byte, len(gifs))
+		for i := range inDatas {
+			inDatas[i] = gifs[i].Pix
+		}
+		outData := xorAll(inDatas)
+		result.Image = append(result.Image, frame(gifTemplate, outData))
+		result.Delay = append(result.Delay, delay)
 	}
 
 	outfile := sb.String()
@@ -125,10 +158,6 @@ func mainWithError() error {
 	}
 	defer w.Close()
 
-	result := igif.GIF{
-		Image: gifs[:1],
-		Delay: make([]int, 1),
-	}
 	if err := igif.EncodeAll(w, &result); err != nil {
 		return err
 	}
@@ -136,4 +165,27 @@ func mainWithError() error {
 	fmt.Printf("converted/XORed %d images to %s-256 palette as a GIF in %s.\n", len(infiles), strings.ToLower(*palette), outfile)
 
 	return nil
+}
+
+func frame(template *image.Paletted, data []byte) *image.Paletted {
+	result := *template
+	result.Pix = data
+	return &result
+}
+
+func xorWithOffset(a, b []byte, offset int) []byte {
+	result := make([]byte, len(a))
+	for i := range result {
+		//result[i] = a[i] ^ b[i]
+		result[i] = a[i] ^ b[(i+offset)%len(a)]
+	}
+	return result
+}
+
+func xorAll(datas [][]byte) []byte {
+	result := datas[0]
+	for i := 1; i < len(datas); i++ {
+		result = xorWithOffset(result, datas[i], 0)
+	}
+	return result
 }
