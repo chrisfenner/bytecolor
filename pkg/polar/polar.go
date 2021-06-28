@@ -19,8 +19,16 @@ func Add(coords ...Coord) Coord {
 
 	rads := math.Atan2(resultY, resultX)
 	resultR := math.Sqrt(resultY*resultY + resultX*resultX)
+	// Normalize the angle to [0, 360)
+	degrees := rads * 180.0 / math.Pi
+	for degrees < 0.0 {
+		degrees += 360.0
+	}
+	for degrees >= 360.0 {
+		degrees -= 360.0
+	}
 	return Coord{
-		Degrees: rads * 180.0 / math.Pi,
+		Degrees: degrees,
 		Radius:  resultR,
 	}
 }

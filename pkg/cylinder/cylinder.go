@@ -28,8 +28,8 @@ const (
 )
 
 func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel, dist DistanceFunc) (*Palette, error) {
-	if angleShift > 45.0 || angleShift < 0.0 {
-		return nil, fmt.Errorf("angleShift must be between 0 and 45 degrees")
+	if angleShift > 45.0 || angleShift < -45.0 {
+		return nil, fmt.Errorf("angleShift must be between -45 and 45 degrees")
 	}
 	if baseRadius > 1.0 || baseRadius < 0.0 {
 		return nil, fmt.Errorf("baseRadius must be between 0 and 1.0")

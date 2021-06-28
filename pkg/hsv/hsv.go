@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	hueShift = float64(0)
-	// this saturation value is calculated such that there is no clamping even for 0x0f
-	saturation = float64(0.384)
+	hueShift   = float64(0)
+	saturation = float64(0.5)
 	value      = float64(1.0 / 8)
 )
 
@@ -17,7 +16,7 @@ func New() (*cylinder.Palette, error) {
 		hueShift,
 		saturation,
 		value,
-		colorful.Hsv,
+		Hsv,
 		func(c1, c2 colorful.Color) float64 {
 			return c1.DistanceRgb(c2)
 		},

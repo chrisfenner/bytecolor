@@ -97,7 +97,55 @@ func Test(p Palette) error {
 	if err := hslGamut(p); err != nil {
 		return err
 	}
+	if err := ones(p); err != nil {
+		return err
+	}
 	return nil
+}
+
+func ones(p Palette) error {
+	x, err := terminal.Width()
+	if err != nil {
+		return err
+	}
+	vals := make([]byte, 256)
+	for i := range vals {
+		vals[i] = byte(i)
+	}
+	sort.Slice(vals, func(i, j int) bool {
+		i1s := countOnes(vals[i])
+		i2s := countOnes(vals[j])
+		if i1s != i2s {
+			return i1s < i2s
+		}
+		return vals[i] < vals[j]
+	})
+	rows := make([][]byte, 9)
+	for _, val := range vals {
+		ones := countOnes(val)
+		rows[ones] = append(rows[ones], val)
+	}
+	for _, row := range rows {
+		for i, val := range row {
+			if i%int(x) == 0 {
+				fmt.Printf("\n")
+			}
+			bg := p.Select(val)
+			tc.Background(byte(bg[0]), byte(bg[1]), byte(bg[2])).Print(" ")
+		}
+	}
+	fmt.Printf("\n")
+	return nil
+}
+
+func countOnes(b byte) int {
+	ones := 0
+	for i := 1; i < 256; i <<= 1 {
+		if b&byte(i) != 0 {
+			ones++
+		}
+	}
+	return ones
 }
 
 func grayCodeFill(p Palette) error {
@@ -186,8 +234,14 @@ func hslGamut(p Palette) error {
 }
 
 func numericOrder(p Palette) error {
-	fmt.Printf("\n")
+	x, err := terminal.Width()
+	if err != nil {
+		return err
+	}
 	for i := 0; i < 256; i++ {
+		if i%int(x) == 0 {
+			fmt.Printf("\n")
+		}
 		bg := p.Select(byte(i))
 		tc.Background(bg[0], bg[1], bg[2]).Print(" ")
 	}
@@ -196,7 +250,10 @@ func numericOrder(p Palette) error {
 }
 
 func hueOrder(p Palette) error {
-	fmt.Printf("\n")
+	x, err := terminal.Width()
+	if err != nil {
+		return err
+	}
 	colors := make([]colorful.Color, 256)
 	for i := range colors {
 		rgb := p.Select(byte(i))
@@ -220,16 +277,22 @@ func hueOrder(p Palette) error {
 		// If neither color is un-colorful, order by hue.
 		return hi < hj
 	})
-	for _, c := range colors {
+	for i, c := range colors {
+		if i%int(x) == 0 {
+			fmt.Printf("\n")
+		}
 		r, g, b, _ := c.RGBA()
-		tc.Background(byte(r), byte(g/256), byte(b/256)).Print(" ")
+		tc.Background(byte(r/256), byte(g/256), byte(b/256)).Print(" ")
 	}
 	fmt.Printf("\n")
 	return nil
 }
 
 func lightnessOrder(p Palette) error {
-	fmt.Printf("\n")
+	x, err := terminal.Width()
+	if err != nil {
+		return err
+	}
 	colors := make([]colorful.Color, 256)
 	for i := range colors {
 		rgb := p.Select(byte(i))
@@ -258,7 +321,10 @@ func lightnessOrder(p Palette) error {
 		// If both colors have very close lightness, order by hue.
 		return hi < hj
 	})
-	for _, c := range colors {
+	for i, c := range colors {
+		if i%int(x) == 0 {
+			fmt.Printf("\n")
+		}
 		r, g, b, _ := c.RGBA()
 		tc.Background(byte(r), byte(g/256), byte(b/256)).Print(" ")
 	}
