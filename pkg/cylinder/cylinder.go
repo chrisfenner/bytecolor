@@ -17,6 +17,7 @@ type Palette struct {
 	bitcolors [8]colorful.Color
 	model     ColorModel
 	dist      DistanceFunc
+	tweaks    map[byte][3]byte
 }
 
 const (
@@ -27,7 +28,7 @@ const (
 	baseHeight = float64(1.0 / 8)
 )
 
-func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel, dist DistanceFunc) (*Palette, error) {
+func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel, dist DistanceFunc, tweaks map[byte][3]byte) (*Palette, error) {
 	if angleShift > 45.0 || angleShift < -45.0 {
 		return nil, fmt.Errorf("angleShift must be between -45 and 45 degrees")
 	}
@@ -46,10 +47,14 @@ func NewPalette(angleShift, baseRadius, baseHeight float64, model ColorModel, di
 		bitcolors: bitcolors,
 		model:     model,
 		dist:      dist,
+		tweaks:    tweaks,
 	}, nil
 }
 
 func (p *Palette) Select(val byte) [3]byte {
+	if tweaked, ok := p.tweaks[val]; ok {
+		return tweaked
+	}
 	var mixPolars []polar.Coord
 	mixValue := float64(0)
 	for i := 0; i < 8; i++ {

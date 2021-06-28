@@ -20,5 +20,8 @@ func New() (*cylinder.Palette, error) {
 		func(c1, c2 colorful.Color) float64 {
 			return c1.DistanceRgb(c2)
 		},
+		map[byte][3]byte{
+			255: [3]byte{255, 255, 255},
+		},
 	)
 }

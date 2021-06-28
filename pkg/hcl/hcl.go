@@ -11,7 +11,7 @@ const (
 	// Chosen by experimentation: Just barely not too saturated.
 	chroma = float64(0.065)
 	// Chosen by experimentation: Avoids too many "nearly white" shades.
-	lightness = float64(0.9 / 8)
+	lightness = float64(0.0875)
 )
 
 func New() (*cylinder.Palette, error) {
@@ -22,6 +22,9 @@ func New() (*cylinder.Palette, error) {
 		colorful.Hcl,
 		func(c1, c2 colorful.Color) float64 {
 			return c1.DistanceLab(c2)
+		},
+		map[byte][3]byte{
+			255: [3]byte{255, 255, 255},
 		},
 	)
 }

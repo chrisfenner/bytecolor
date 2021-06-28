@@ -11,7 +11,7 @@ const (
 	// Chosen experimentally. Just as saturated as I can stand.
 	chroma = float64(0.065)
 	// Chosen experimentally. Avoids too many white shades.
-	lightness = float64(0.9 / 8)
+	lightness = float64(0.0875)
 )
 
 func New() (*cylinder.Palette, error) {
@@ -24,6 +24,9 @@ func New() (*cylinder.Palette, error) {
 		},
 		func(c1, c2 colorful.Color) float64 {
 			return c1.DistanceLuv(c2)
+		},
+		map[byte][3]byte{
+			255: [3]byte{255, 255, 255},
 		},
 	)
 }
