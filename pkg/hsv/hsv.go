@@ -16,7 +16,7 @@ func New() (*cylinder.Palette, error) {
 		hueShift,
 		saturation,
 		value,
-		Hsv,
+		colorful.Hsv,
 		func(c1, c2 colorful.Color) float64 {
 			return c1.DistanceRgb(c2)
 		},
