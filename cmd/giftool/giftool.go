@@ -18,6 +18,7 @@ import (
 	"github.com/chrisfenner/bytecolor/pkg/hsv"
 	"github.com/chrisfenner/bytecolor/pkg/luv"
 	"github.com/chrisfenner/bytecolor/pkg/tester"
+	"github.com/chrisfenner/bytecolor/pkg/windows"
 )
 
 var (
@@ -66,6 +67,11 @@ func mainWithError() error {
 		}
 	case "luv":
 		pal, err = luv.New()
+		if err != nil {
+			return err
+		}
+	case "win":
+		pal, err = windows.New()
 		if err != nil {
 			return err
 		}
